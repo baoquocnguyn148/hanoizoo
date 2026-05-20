@@ -1,0 +1,79 @@
+.animal-card {
+  display: block;
+  background: var(--white);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.animal-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(30, 58, 41, 0.15);
+}
+
+.card-image-wrapper {
+  position: relative;
+  height: 250px;
+  overflow: hidden;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.animal-card:hover .card-image {
+  transform: scale(1.1);
+}
+
+.card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 58, 41, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.animal-card:hover .card-overlay {
+  opacity: 1;
+}
+
+.card-desc {
+  color: var(--white);
+  text-align: center;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.animal-card:hover .card-desc {
+  transform: translateY(0);
+}
+
+.card-content {
+  padding: 1.5rem;
+}
+
+.animal-name {
+  color: var(--primary);
+  font-size: 1.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.scientific-name {
+  color: var(--text-light);
+  font-style: italic;
+  font-size: 0.9rem;
+}

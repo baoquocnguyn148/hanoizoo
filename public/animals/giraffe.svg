@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#dff2ff"/><stop offset="1" stop-color="#f9e6b6"/></linearGradient></defs>
+  <rect width="900" height="600" fill="url(#sky)"/>
+  <rect y="420" width="900" height="180" fill="#9fbe62"/>
+  <circle cx="720" cy="95" r="58" fill="#f5c94b"/>
+  <path d="M235 443c42-78 142-105 234-74 77 26 139 86 152 151H213c0-28 7-54 22-77Z" fill="#c98b37"/>
+  <path d="M463 187c54 58 79 147 54 239l-80-10c18-79 2-153-43-208l69-21Z" fill="#d69a42"/>
+  <path d="M376 161c48-27 113-16 149 29 21 27 11 58-24 69-54 17-131-10-163-49-18-22-2-38 38-49Z" fill="#dfa94e"/>
+  <path d="M357 158l-21-58M425 145l8-66" stroke="#5d3c23" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="330" cy="88" r="16" fill="#6b4427"/><circle cx="434" cy="73" r="16" fill="#6b4427"/>
+  <circle cx="475" cy="193" r="9" fill="#1f1b16"/>
+  <path d="M394 216c25 21 61 29 92 19" stroke="#704724" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <g fill="#7c4a24">
+    <circle cx="428" cy="392" r="23"/><circle cx="486" cy="342" r="19"/><circle cx="365" cy="348" r="21"/><circle cx="461" cy="262" r="16"/><circle cx="548" cy="461" r="24"/><circle cx="295" cy="435" r="18"/>
+  </g>
+  <path d="M263 500v68M365 501v68M512 500v68M600 505v63" stroke="#5d3c23" stroke-width="20" stroke-linecap="round"/>
+</svg>
