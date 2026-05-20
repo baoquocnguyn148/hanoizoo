@@ -10,7 +10,7 @@ const Login = () => {
     const formData = new FormData(e.currentTarget);
     const fullName = formData.get('fullName')?.toString().trim();
     const email = formData.get('email')?.toString().trim();
-    const fallbackName = email ? email.split('@')[0] : 'TraMy';
+    const fallbackName = email ? email.split('@')[0] : 'Khách';
     localStorage.setItem('zoo_user', fullName || fallbackName);
     navigate('/');
     window.location.reload(); // Simple way to update Navbar state
@@ -26,7 +26,7 @@ const Login = () => {
           {!isLogin && (
             <div className="form-group">
               <label>Họ và tên</label>
-              <input name="fullName" type="text" placeholder="Ví dụ: Nguyễn Văn TraMy" required />
+              <input name="fullName" type="text" placeholder="Ví dụ: Nguyễn Văn An" required />
             </div>
           )}
           <div className="form-group">

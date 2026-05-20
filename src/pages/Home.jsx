@@ -13,9 +13,9 @@ const Home = () => {
     {
       id: 1,
       image: '/hero.png',
-      subtitle: 'Khám Phá Thiên Nhiên',
+      subtitle: 'Nâng Cao Trải Nghiệm Du Khách',
       title: 'Hành Trình Mới',
-      description: 'Trải nghiệm vẻ đẹp kỳ diệu của thế giới động vật và chung tay bảo tồn sự sống.',
+      description: '',
       buttonText: 'Mua Vé Ngay',
       link: '/tickets',
       showDesc: true
@@ -58,33 +58,35 @@ const Home = () => {
 
         {currentBanner.showDesc !== false ? (
           <div className="container animate-fade-in" style={{zIndex: 10, width: '100%', position: 'relative'}} key={currentBanner.id}>
-            <div style={{maxWidth: '800px', textAlign: 'left', paddingBottom: '5rem'}}>
+            <div style={{maxWidth: '850px', textAlign: 'left', paddingBottom: '2rem'}}>
               <h1 style={{
-                fontSize: 'clamp(3rem, 5vw, 4.5rem)', 
+                fontSize: 'clamp(2.5rem, 4.5vw, 4rem)', 
                 marginBottom: '1.5rem', 
-                textShadow: '0 4px 15px rgba(0,0,0,0.6)',
-                lineHeight: '1.1',
+                textShadow: '0 4px 15px rgba(0,0,0,0.7)',
+                lineHeight: '1.2',
                 fontWeight: '800',
                 color: 'white',
-                letterSpacing: '-1px'
+                letterSpacing: '-0.5px'
               }}>
                 {currentBanner.title}
               </h1>
-              <p style={{
-                fontSize: '1.25rem', 
-                marginBottom: '2.5rem', 
-                maxWidth: '600px', 
-                color: 'rgba(255, 255, 255, 0.95)',
-                lineHeight: '1.6',
-                textShadow: '0 2px 5px rgba(0,0,0,0.5)'
-              }}>
-                {currentBanner.description}
-              </p>
-              <div style={{display: 'flex', gap: '1.2rem', flexWrap: 'wrap'}}>
-                <Link to="/tickets" className="btn btn-glass-primary btn-lg" style={{padding: '1rem 2.5rem', fontSize: '1.1rem', fontWeight: 'bold'}}>
+              {currentBanner.subtitle && (
+                <p style={{
+                  fontSize: 'clamp(1.1rem, 1.6vw, 1.35rem)', 
+                  marginBottom: '2.5rem', 
+                  maxWidth: '650px', 
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  lineHeight: '1.6',
+                  textShadow: '0 2px 5px rgba(0,0,0,0.5)'
+                }}>
+                  {currentBanner.subtitle}
+                </p>
+              )}
+              <div className="hero-actions" style={{ marginTop: currentBanner.subtitle ? '0' : '1.5rem' }}>
+                <Link to="/tickets" className="btn btn-glass-primary btn-lg">
                   {currentBanner.buttonText || 'Mua Vé Ngay'}
                 </Link>
-                <Link to="/policies" className="btn btn-glass-secondary btn-lg" style={{padding: '1rem 2.5rem', fontSize: '1.1rem', fontWeight: 'bold'}}>
+                <Link to="/policies" className="btn btn-glass-secondary btn-lg">
                   Tìm hiểu nội quy
                 </Link>
               </div>

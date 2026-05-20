@@ -16,8 +16,16 @@ const AnimalDetail = () => {
       <section className="animal-detail-hero">
         <img src={animal.image} alt={animal.name} />
         <div className="animal-detail-overlay"></div>
+        
+        <div className="back-link-wrapper">
+          <div className="container">
+            <Link to="/" className="back-link">
+              <ArrowLeft size={18} /> Quay lại trang chủ
+            </Link>
+          </div>
+        </div>
+
         <div className="container animal-detail-heading">
-          <Link to="/" className="back-link"><ArrowLeft size={18} /> Quay lại trang chủ</Link>
           <p className="animal-kicker">Hồ sơ động vật</p>
           <h1>{animal.name}</h1>
           <p className="animal-science">{animal.scientificName}</p>

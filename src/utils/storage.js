@@ -5,9 +5,9 @@ const initialBanners = [
   {
     id: 1,
     image: '/hero.png',
-    subtitle: 'Khám Phá Thiên Nhiên',
+    subtitle: 'Nâng Cao Trải Nghiệm Du Khách',
     title: 'Hành Trình Mới',
-    description: 'Trải nghiệm vẻ đẹp kỳ diệu của thế giới động vật và chung tay bảo tồn sự sống trên Trái Đất.',
+    description: '',
     buttonText: 'Mua Vé Ngay',
     link: '/tickets',
     showDesc: true,
@@ -55,7 +55,41 @@ export const saveTicketOrder = (order) => {
   return nextOrders;
 };
 
-export const getBanners = () => readList(BANNERS_KEY, initialBanners);
+export const getBanners = () => {
+  const banners = readList(BANNERS_KEY, initialBanners);
+  let modified = false;
+  const migrated = banners.map(b => {
+    let changed = false;
+    if (b.id === 1) {
+      if (b.subtitle === 'Khám Phá Thiên Nhiên' || b.subtitle === '') {
+        if (b.description && !b.description.includes('Trải nghiệm vẻ đẹp kỳ diệu') && b.description !== '') {
+          b.subtitle = b.description;
+        } else {
+          b.subtitle = 'Nâng Cao Trải Nghiệm Du Khách';
+        }
+        b.description = '';
+        changed = true;
+      } else if (b.description === 'Nâng Cao Trải Nghiệm Du Khách') {
+        b.subtitle = 'Nâng Cao Trải Nghiệm Du Khách';
+        b.description = '';
+        changed = true;
+      }
+    }
+    const keysToDelete = ['textAlign', 'titleSize', 'titleColor', 'subtitleText', 'subtitleSize', 'subtitleColor'];
+    keysToDelete.forEach(k => {
+      if (k in b) {
+        delete b[k];
+        changed = true;
+      }
+    });
+    if (changed) modified = true;
+    return b;
+  });
+  if (modified) {
+    saveBanners(migrated);
+  }
+  return migrated;
+};
 
 export const saveBanners = (banners) => {
   writeList(BANNERS_KEY, banners);

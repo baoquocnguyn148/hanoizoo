@@ -7,8 +7,11 @@
   position: relative;
   min-height: 62vh;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   overflow: hidden;
+  padding-top: 10rem;
+  padding-bottom: 5rem;
+  box-sizing: border-box;
 }
 
 .animal-detail-hero img {
@@ -29,16 +32,30 @@
   position: relative;
   z-index: 1;
   color: var(--white);
-  padding-bottom: 4rem;
+  padding-bottom: 0;
+  width: 100%;
+}
+
+.back-link-wrapper {
+  position: absolute;
+  top: 7rem;
+  left: 0;
+  width: 100%;
+  z-index: 10;
 }
 
 .back-link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 2rem;
   color: rgba(255, 255, 255, 0.88);
   font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.back-link:hover {
+  color: var(--secondary);
+  transform: translateX(-4px);
 }
 
 .animal-kicker {
@@ -147,5 +164,11 @@
 
   .animal-detail-hero {
     min-height: 56vh;
+    padding-top: 8rem;
+    padding-bottom: 4rem;
+  }
+
+  .back-link-wrapper {
+    top: 5.5rem;
   }
 }

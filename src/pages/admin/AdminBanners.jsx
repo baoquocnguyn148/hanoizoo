@@ -114,10 +114,7 @@ const AdminBanners = () => {
           </div>
         </div>
 
-        <div className="form-group">
-          <label>Mô tả</label>
-          <textarea name="description" value={form.description} onChange={handleChange} placeholder="Nội dung hiển thị trên banner" rows="3" />
-        </div>
+
 
         <div className="banner-upload-row">
           <label className="upload-box">
