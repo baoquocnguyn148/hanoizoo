@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="footer-col">
           <Link to="/" className="footer-logo">
             <Leaf className="logo-icon" />
-            <span>Sở Thú</span>
+            <span>Vườn Thú Hà Nội</span>
           </Link>
           <p className="text-light mt-3">
             Hòa mình vào thiên nhiên hoang dã. Cùng chung tay bảo vệ sự đa dạng sinh học và các loài động vật quý hiếm.
@@ -39,7 +39,7 @@ const Footer = () => {
       </div>
       
       <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} Sở Thú. Lấy cảm hứng từ San Diego Zoo. Không dành cho mục đích thương mại.</p>
+        <p>&copy; {new Date().getFullYear()} Vườn Thú Hà Nội. Lấy cảm hứng từ San Diego Zoo. Không dành cho mục đích thương mại.</p>
       </div>
     </footer>
   );
