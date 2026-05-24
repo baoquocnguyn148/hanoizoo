@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Navigate, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import Chatbot from './components/Chatbot';
 import Home from './pages/Home';
 import Tickets from './pages/Tickets';
 import Policies from './pages/Policies';
@@ -28,6 +29,7 @@ function App() {
             <Route path="/animals/:id" element={<AnimalDetail />} />
           </Routes>
         </main>
+        <Chatbot />
         {/* Chỉ hiển thị Footer nếu không phải là trang admin */}
         <Routes>
           <Route path="/admin/*" element={null} />

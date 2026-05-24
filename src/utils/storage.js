@@ -6,7 +6,7 @@ const initialBanners = [
     id: 1,
     image: '/hero.png',
     subtitle: 'Nâng Cao Trải Nghiệm Du Khách',
-    title: 'Hành Trình Khám Phá Muôn Loài Tại Sở Thú',
+    title: 'Hành Trình Khám Phá Muôn Loài Tại Sở Thú Hà Nội',
     description: '',
     buttonText: 'Mua Vé Ngay',
     link: '/tickets',
@@ -61,6 +61,10 @@ export const getBanners = () => {
   const migrated = banners.map(b => {
     let changed = false;
     if (b.id === 1) {
+      if (b.title === 'Hành Trình Khám Phá Muôn Loài Tại Sở Thú') {
+        b.title = 'Hành Trình Khám Phá Muôn Loài Tại Sở Thú Hà Nội';
+        changed = true;
+      }
       if (b.subtitle === 'Khám Phá Thiên Nhiên' || b.subtitle === '') {
         if (b.description && !b.description.includes('Trải nghiệm vẻ đẹp kỳ diệu') && b.description !== '') {
           b.subtitle = b.description;
