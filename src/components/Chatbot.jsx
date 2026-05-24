@@ -9,6 +9,7 @@ const normalize = (s) =>
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
     .trim();
 
 const hasAny = (input, list) => list.some((k) => input.includes(k));
@@ -60,12 +61,21 @@ const MENU_CHIPS = ['Giá vé', 'Giờ mở cửa', 'Địa chỉ', 'Nội quy',
 const YES_WORDS = ['co', 'có', 'duoc', 'được', 'ok', 'va', 'oke', 'yes', 'dùng'];
 const NO_WORDS = ['khong', 'không', 'ko', 'kh o', 'nay', 'no'];
 
+const POLICY_QUESTION_REGEX = /(mang (thuc an|do uong|do an|nuoc uong)|cho (dong vat|dong vat|cho an|an dat)|hut thuoc|u?ong (ruou|bia)|tu y|tu y cho|khong duoc|khong nen|co duoc khong|co duoc ko|duoc khong|duoc ko)/;
+const ANIMAL_YESNO_REGEX = /(co|có).*(khong|ko)/;
+const ANIMAL_STOP_WORDS = ['co', 'có', 'khong', 'không', 'ko', 'o', 'dau', 'la', 'con', 'loai', 've', 'tim', 'xem'];
+
 const findAnimals = (input) => {
   const q = normalize(input);
   if (!q) return [];
 
-  const tokens = q.split(/\s+/).filter(Boolean);
-  const shouldTry = tokens.length >= 2 || /(?:dong vat|loai|con nao|tim|xem|ve.*dong vat|thong tin.*dong vat)/.test(q);
+  const tokens = q
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .filter((t) => !ANIMAL_STOP_WORDS.includes(t));
+
+  const shouldTry = tokens.length >= 1 || /(?:dong vat|loai|con nao|tim|xem|ve.*dong vat|thong tin.*dong vat)/.test(q);
 
   if (!shouldTry) return [];
 
@@ -84,11 +94,25 @@ const findAnimals = (input) => {
       if (haystack === q) score += 15;
       if (normalize(a.id) === q) score += 12;
 
+      const hayWords = new Set(haystack.split(/\s+/));
+
       for (const t of tokens) {
         if (t.length < 2) continue;
-        if (haystack.includes(t)) score += t.length >= 4 ? 5 : 2;
-        if (a.aliases?.some((alias) => normalize(alias) === t)) score += 8;
-        if (a.scientificName && normalize(a.scientificName).includes(t)) score += 4;
+        if (a.aliases?.some((alias) => normalize(alias) === t)) {
+          score += 10;
+          continue;
+        }
+        if (normalize(a.id) === t) {
+          score += 10;
+          continue;
+        }
+        if (hayWords.has(t)) {
+          score += t.length >= 4 ? 5 : 3;
+          continue;
+        }
+        if (t.length >= 4 && haystack.includes(t)) {
+          score += 2;
+        }
       }
 
       return { a, score };
@@ -132,6 +156,16 @@ const buildReply = (inputRaw, lastIntent = '') => {
     };
   }
 
+  if (POLICY_QUESTION_REGEX.test(input)) {
+    return {
+      intent: 'policy',
+      text:
+        'Hiện tại Sở thú có các quy định sau:\n• Không mang thức ăn vào khu vực tham quan\n• Không tự ý cho động vật ăn\n• Không hút thuốc trong khu vực tham quan\n• Tuân thủ biển báo và hướng dẫn của nhân viên\nNếu bạn cần thông tin cụ thể về nội quy, mình có thể chuyển sang trang “Nội quy”.',
+      chips: ['Nội quy', 'Địa chỉ', 'Giờ mở cửa'],
+      links: [COMMON_LINKS.policies]
+    };
+  }
+
   for (const faq of FAQS) {
     if (hasAny(input, faq.keys)) {
       return {
@@ -143,7 +177,7 @@ const buildReply = (inputRaw, lastIntent = '') => {
     }
   }
 
-  if (/(lien he|dia chi|o dau|ban do|map|chi duong|duong di|so dien thoai|website|contact|sdt|hotline)/.test(input)) {
+  if (/(lien he|dia chi|o dau|ban do|map|chi duong|duong di|so dien thoai|website|contact|sdt|hotline|so thu|zoo)/.test(input)) {
     return {
       intent: 'contact',
       text: `Thông tin liên hệ:\n• Địa chỉ: ${CONTACT.address}\n• Điện thoại: ${CONTACT.phone}\n• Website: ${CONTACT.website}`,
@@ -161,10 +195,10 @@ const buildReply = (inputRaw, lastIntent = '') => {
     };
   }
 
-  if (/(mua ve|dat ve|gia ve|ve tham quan|ticket|thanh toan|bang gia|gia ca)/.test(input)) {
+  if (/(mua ve|dat ve|gia ve|ve tham quan|ticket|thanh toan|bang gia|gia ca|gia.*tre em|ve.*tre em|tre em.*gia|tre em.*ve)/.test(input)) {
     return {
       intent: 'pricing',
-      text: `Bảng giá tham quan:\n${TICKET_PRICES_TEXT}\n\nBạn có thể đặt vé trực tuyến tại trang “Mua vé”.`,
+      text: `Bảng giá tham quan:\n${TICKET_PRICES_TEXT}\n\nTrong đó, vé trẻ em: 150.000đ (1m - 1m3), miễn phí dưới 1m khi đi cùng người lớn).`,
       chips: ['Cách đặt vé', 'Đổi ngày tham quan?', 'Miễn phí trẻ em?'],
       links: [COMMON_LINKS.tickets]
     };
@@ -191,7 +225,32 @@ const buildReply = (inputRaw, lastIntent = '') => {
   }
 
   const matchedAnimals = findAnimals(inputRaw);
-  const animalSignals = /(dong vat|loai|con nao|co nhung con gi|xem dong vat|tim|ve con|ve loai)/.test(input);
+  const animalSignals = /(dong vat|loai|con nao|co nhung con gi|xem dong vat|tim|ve con|ve loai|co|co.*khong|co.*ko)/.test(input);
+  const isAnimalYesNo = ANIMAL_YESNO_REGEX.test(input);
+  if (isAnimalYesNo) {
+    if (matchedAnimals.length === 0) {
+      return {
+        intent: 'animal_not_found',
+        text:
+          'Mình chưa tìm thấy loài này trong danh sách hiện tại của Vườn thú. Bạn có thể thử hỏi tên loài khác hoặc tra cứu các loài có sẵn.',
+        chips: ['Tìm động vật', 'Nội quy', 'Địa chỉ']
+      };
+    }
+    const animalNames = matchedAnimals.map((a) => a.name).join(', ');
+    return {
+      intent: 'animal_exists',
+      text:
+        matchedAnimals.length === 1
+          ? `Có, hiện tại Vườn thú có ${animalNames}. Bạn có thể bấm vào để xem hồ sơ chi tiết.`
+          : `Có, hiện tại Vườn thú có các loài: ${animalNames}. Bạn có thể bấm vào để xem hồ sơ chi tiết.`,
+      links: matchedAnimals.map((a) => ({
+        label: `${a.name} (${a.scientificName})`,
+        to: `/animals/${a.id}`
+      })),
+      chips: matchedAnimals.slice(0, 3).map((a) => a.name)
+    };
+  }
+
   if (matchedAnimals.length > 0 && (animalSignals || matchedAnimals.length <= 3)) {
     const links = matchedAnimals.map((a) => ({
       label: `${a.name} (${a.scientificName})`,
