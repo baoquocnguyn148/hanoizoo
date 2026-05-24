@@ -11,6 +11,8 @@ const normalize = (s) =>
     .replace(/[\u0300-\u036f]/g, '')
     .trim();
 
+const hasAny = (input, list) => list.some((k) => input.includes(k));
+
 const COMMON_LINKS = {
   tickets: { label: 'Mua vé', to: '/tickets' },
   policies: { label: 'Nội quy', to: '/policies' },
@@ -55,47 +57,56 @@ const FAQS = [
 
 const MENU_CHIPS = ['Giá vé', 'Giờ mở cửa', 'Địa chỉ', 'Nội quy', 'Tìm động vật'];
 
+const YES_WORDS = ['co', 'có', 'duoc', 'được', 'ok', 'va', 'oke', 'yes', 'dùng'];
+const NO_WORDS = ['khong', 'không', 'ko', 'kh o', 'nay', 'no'];
+
 const findAnimals = (input) => {
   const q = normalize(input);
   if (!q) return [];
 
-  // Chỉ gợi ý tìm động vật khi có tín hiệu rõ ràng hoặc có match theo tên loài
-  const shouldTry =
-    /(tim|xem|thong tin|ho so|gioi thieu|ve con|ve loai|dong vat|loai)/.test(q) ||
-    q.length >= 3;
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const shouldTry = tokens.length >= 2 || /(?:dong vat|loai|con nao|tim|xem|ve.*dong vat|thong tin.*dong vat)/.test(q);
 
   if (!shouldTry) return [];
 
-  const tokens = q.split(/\s+/).filter(Boolean);
-  const scoreOf = (a) => {
-    const hay = `${normalize(a.name)} ${normalize(a.scientificName)} ${normalize(a.habitat)} ${normalize(a.diet)}`;
-    let score = 0;
-    for (const t of tokens) {
-      if (t.length < 2) continue;
-      if (hay.includes(t)) score += t.length >= 4 ? 3 : 2;
-    }
-    // ưu tiên match theo tên thường gọi / khoa học nguyên cụm
-    if (hay.includes(q)) score += 6;
-    return score;
-  };
+  const scored = animals
+    .map((a) => {
+      const haystack = normalize([
+        a.name,
+        a.scientificName,
+        a.habitat,
+        a.diet,
+        a.aliases?.join(' '),
+        a.keywords?.join(' ')
+      ].filter(Boolean).join(' '));
 
-  const ranked = animals
-    .map((a) => ({ a, score: scoreOf(a) }))
-    .filter((x) => x.score > 0)
-    .sort((x, y) => y.score - x.score)
+      let score = 0;
+      if (haystack === q) score += 15;
+      if (normalize(a.id) === q) score += 12;
+
+      for (const t of tokens) {
+        if (t.length < 2) continue;
+        if (haystack.includes(t)) score += t.length >= 4 ? 5 : 2;
+        if (a.aliases?.some((alias) => normalize(alias) === t)) score += 8;
+        if (a.scientificName && normalize(a.scientificName).includes(t)) score += 4;
+      }
+
+      return { a, score };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
     .slice(0, 5)
-    .map((x) => x.a);
+    .map((entry) => entry.a);
 
-  return ranked;
+  return scored;
 };
 
-const hasAny = (input, list) => list.some((k) => input.includes(k));
-
-const buildReply = (inputRaw) => {
+const buildReply = (inputRaw, lastIntent = '') => {
   const input = normalize(inputRaw);
 
   if (!input) {
     return {
+      intent: 'help',
       text:
         'Bạn muốn mình tư vấn phần nào? Mình có thể hỗ trợ về giá vé, giờ mở cửa, nội quy, địa chỉ/liên hệ, và tra cứu thông tin động vật.',
       chips: MENU_CHIPS,
@@ -103,10 +114,28 @@ const buildReply = (inputRaw) => {
     };
   }
 
-  // 1) FAQ (ưu tiên cao vì cụm từ khá đặc trưng)
+  if (lastIntent === 'askPoliciesDetail' && hasAny(input, YES_WORDS)) {
+    return {
+      intent: 'policies',
+      text: 'Mời bạn mở trang “Chính sách & Nội quy” để xem đầy đủ thông tin.',
+      links: [COMMON_LINKS.policies],
+      chips: ['Giờ mở cửa', 'Giá vé', 'Địa chỉ']
+    };
+  }
+
+  if (lastIntent === 'askPoliciesDetail' && hasAny(input, NO_WORDS)) {
+    return {
+      intent: 'help',
+      text: 'Hiểu rồi. Bạn muốn mình hỗ trợ về giá vé, giờ mở cửa hay tìm động vật?',
+      chips: MENU_CHIPS,
+      links: [COMMON_LINKS.tickets, COMMON_LINKS.policies]
+    };
+  }
+
   for (const faq of FAQS) {
     if (hasAny(input, faq.keys)) {
       return {
+        intent: 'faq',
         text: faq.answer,
         chips: ['Giá vé', 'Giờ mở cửa', 'Nội quy'],
         links: [COMMON_LINKS.policies, COMMON_LINKS.tickets]
@@ -114,37 +143,36 @@ const buildReply = (inputRaw) => {
     }
   }
 
-  // 2) Liên hệ / địa chỉ (ưu tiên hơn “động vật” vì cụm “sở thú” dễ gây nhiễu)
-  if (
-    /(lien he|dia chi|o dau|ban do|map|chi duong|duong di|so dien thoai|website|contact)/.test(input)
-  ) {
+  if (/(lien he|dia chi|o dau|ban do|map|chi duong|duong di|so dien thoai|website|contact|sdt|hotline)/.test(input)) {
     return {
+      intent: 'contact',
       text: `Thông tin liên hệ:\n• Địa chỉ: ${CONTACT.address}\n• Điện thoại: ${CONTACT.phone}\n• Website: ${CONTACT.website}`,
       externalLinks: [{ label: 'Mở Google Maps', href: CONTACT.mapsUrl }],
       chips: ['Giờ mở cửa', 'Giá vé', 'Nội quy']
     };
   }
 
-  // 3) Giờ mở cửa
-  if (/(gio mo cua|mo cua|dong cua|gio hoat dong|opening)/.test(input)) {
+  if (/(gio mo cua|mo cua|dong cua|gio hoat dong|opening|thoi gian)(?:.*)/.test(input)) {
     return {
+      intent: 'hours',
       text: `Giờ hoạt động:\n${HOURS_TEXT}`,
       chips: ['Giá vé', 'Địa chỉ', 'Nội quy'],
       links: [COMMON_LINKS.policies]
     };
   }
 
-  // 4) Vé / thanh toán
   if (/(mua ve|dat ve|gia ve|ve tham quan|ticket|thanh toan|bang gia|gia ca)/.test(input)) {
     return {
+      intent: 'pricing',
       text: `Bảng giá tham quan:\n${TICKET_PRICES_TEXT}\n\nBạn có thể đặt vé trực tuyến tại trang “Mua vé”.`,
       chips: ['Cách đặt vé', 'Đổi ngày tham quan?', 'Miễn phí trẻ em?'],
       links: [COMMON_LINKS.tickets]
     };
   }
 
-  if (/(cach dat|dat ve the nao|huong dan dat ve)/.test(input)) {
+  if (/(cach dat|dat ve the nao|huong dan dat ve|cach mua|huong dan mua ve)/.test(input)) {
     return {
+      intent: 'booking',
       text:
         'Cách đặt vé nhanh:\n1) Vào trang “Mua vé”\n2) Chọn ngày tham quan\n3) Chọn số lượng\n4) Nhập họ tên, email, số điện thoại\n5) Bấm “Tiến hành thanh toán” để hoàn tất',
       chips: ['Giá vé', 'Giờ mở cửa', 'Địa chỉ'],
@@ -152,35 +180,26 @@ const buildReply = (inputRaw) => {
     };
   }
 
-  // 5) Nội quy / chính sách
-  if (/(noi quy|chinh sach|quy dinh|policy|cam|luu y)/.test(input)) {
+  if (/(noi quy|chinh sach|quy dinh|policy|cam|luu y|quy tac)/.test(input)) {
     return {
+      intent: 'askPoliciesDetail',
       text:
         'Một số nội quy quan trọng:\n• Không chọc phá/ ném đồ vào chuồng trại\n• Không tự ý cho động vật ăn\n• Chụp ảnh an toàn (tránh flash nơi có biển cấm)\n• Giữ gìn vệ sinh, bỏ rác đúng nơi quy định\n\nBạn muốn xem chi tiết đầy đủ không?',
-      chips: ['Xem chi tiết nội quy', 'Giờ mở cửa', 'Giá vé'],
+      chips: ['Có', 'Không', 'Giờ mở cửa'],
       links: [COMMON_LINKS.policies]
     };
   }
 
-  if (/(xem chi tiet noi quy)/.test(input)) {
-    return {
-      text: 'Mời bạn mở trang “Chính sách & Nội quy” để xem đầy đủ.',
-      links: [COMMON_LINKS.policies],
-      chips: ['Giờ mở cửa', 'Giá vé', 'Địa chỉ']
-    };
-  }
-
-  // 6) Tra cứu động vật (tìm theo tên/nhóm từ khóa)
   const matchedAnimals = findAnimals(inputRaw);
-  const animalSignals = /(dong vat|loai|con nao|co nhung con gi|xem dong vat|tim)/.test(input);
+  const animalSignals = /(dong vat|loai|con nao|co nhung con gi|xem dong vat|tim|ve con|ve loai)/.test(input);
   if (matchedAnimals.length > 0 && (animalSignals || matchedAnimals.length <= 3)) {
     const links = matchedAnimals.map((a) => ({
       label: `${a.name} (${a.scientificName})`,
       to: `/animals/${a.id}`
     }));
-
     const chips = matchedAnimals.slice(0, 3).map((a) => a.name);
     return {
+      intent: 'animal_search',
       text:
         matchedAnimals.length === 1
           ? `Mình tìm thấy 1 kết quả phù hợp. Bạn bấm vào để xem hồ sơ chi tiết nhé.`
@@ -190,16 +209,16 @@ const buildReply = (inputRaw) => {
     };
   }
 
-  // 7) Admin / đăng nhập
   if (/(dang nhap|admin|quan tri)/.test(input)) {
     return {
+      intent: 'admin',
       text:
         'Nếu bạn là quản trị viên, hãy dùng trang đăng nhập quản trị. Người dùng thông thường có thể “Đăng nhập” ở thanh điều hướng để trải nghiệm cá nhân hóa.'
     };
   }
 
-  // 8) Fallback có định hướng
   return {
+    intent: 'fallback',
     text:
       'Mình chưa hiểu rõ câu hỏi. Bạn muốn hỏi về phần nào dưới đây?',
     chips: MENU_CHIPS,
@@ -216,15 +235,14 @@ const Chatbot = () => {
   const [messages, setMessages] = useState(() => [
     {
       from: 'bot',
+      intent: 'welcome',
       text:
         'Chào bạn! Mình là trợ lý tư vấn của website Vườn Thú Hà Nội.\nBạn có thể chọn nhanh hoặc gõ câu hỏi theo ý bạn.',
       chips: MENU_CHIPS,
-      links: [
-        COMMON_LINKS.tickets,
-        COMMON_LINKS.policies
-      ]
+      links: [COMMON_LINKS.tickets, COMMON_LINKS.policies]
     }
   ]);
+  const [lastIntent, setLastIntent] = useState('welcome');
 
   const lastBotMessage = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -248,9 +266,10 @@ const Chatbot = () => {
     setMessages((prev) => [...prev, { from: 'user', text: trimmed }]);
     setInput('');
 
-    const reply = buildReply(trimmed);
+    const reply = buildReply(trimmed, lastIntent);
     window.setTimeout(() => {
       setMessages((prev) => [...prev, { from: 'bot', ...reply }]);
+      setLastIntent(reply.intent || 'help');
     }, 250);
   };
 
